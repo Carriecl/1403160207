@@ -12,7 +12,7 @@ MAKEFILE      = Makefile.Release
 CC            = gcc
 CXX           = g++
 DEFINES       = -DUNICODE -D_UNICODE -DWIN32 -DQT_DEPRECATED_WARNINGS -DQT_QML_DEBUG -DQT_NO_DEBUG -DQT_CORE_LIB
-CFLAGS        = -fno-keep-inline-dllexport -O2 -Wall -W -Wextra $(DEFINES)
+CFLAGS        = -fno-keep-inline-dexport -O2 -Wall -W -Wextra $(DEFINES)
 CXXFLAGS      = -fno-keep-inline-dllexport -O2 -std=gnu++11 -Wall -W -Wextra -fexceptions -mthreads $(DEFINES)
 INCPATH       = -I..\0207 -I. -I..\..\..\Qt\5.9.6\qt\include -I..\..\..\Qt\5.9.6\qt\include\QtCore -Irelease -I..\..\..\Qt\5.9.6\qt\mkspecs\win32-g++ 
 LINKER      =        g++
