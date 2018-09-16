@@ -1,7 +1,6 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QList>
-#include <QStringList>
 
 typedef quint32 word;
 typedef quint8  byte;
