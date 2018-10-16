@@ -41,20 +41,28 @@ enum SortKind{
 };
 }
 
-
-typedef struct{
-    // 请补全结构定义
+typedef struct                      //定义结构体
+{
+    int num;
+    QString name;
+    QVector<int> scores;
 } studData;
 
-QDebug operator<< (QDebug d, const studData &data) {
-    // 请补全运算符重载函数，使其可以直接输出studData结构
+QDebug operator<< (QDebug d, const studData &data)          //对于<<的重载，使其可以直接输出studData结构
+{
+    QDebugStateSaver saver(d);
+    d.nospace()<<data.num<<data.name<<data.scores;
     return d;
 }
 
 // 比较类，用于std::sort第三个参数
-class myCmp {
+class myCmp
+{
 public:
-    myCmp(int selectedColumn) { this->currentColumn = selectedColumn; }
+    myCmp(int selectedColumn)
+    {
+        this->currentColumn = selectedColumn;
+    }
     bool operator() (const studData& d1,const studData& d2);
 private:
     int currentColumn;
@@ -64,15 +72,19 @@ bool myCmp::operator()(const studData &d1, const studData &d2)
 {
     bool result = false;
     quint32 sortedColumn = 0x00000001<<currentColumn;
-    switch (sortedColumn) {
+    switch (sortedColumn)
+    {
     case SK::col01:
-    // ...
+        d1.num<d2.num;
+        break;
+    case SK::col02:
+        d1.name<d2.name;
+        break;
+    default:
+        d1.scores<d2.scores;
     // 请补全运算符重载函数
-    // ...
-    //
     }
     return result;
-
 }
 
 
@@ -86,7 +98,8 @@ public:
 }
 
 // 请补全
-ScoreSorter::ScoreSorter(QString dataFile){
+ScoreSorter::ScoreSorter(QString dataFile)
+{
 }
 
 
@@ -98,17 +111,20 @@ int main(int argc, char *argv[])
 {
 //    QCoreApplication a(argc, argv);
 //    return a.exec();
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
     qInstallMessageHandler(myMessageOutput);
-        QString datafile = "data.txt";
+    QString datafile = "data.txt";
 
-        // 如果排序后文件已存在，则删除之
-        QFile f("sorted_"+datafile);
-        if (f.exists()){
-            f.remove();
-        }
+    // 如果排序后文件已存在，则删除之
+    QFile f("sorted_"+datafile);
+    if (f.exists())
+    {
+        f.remove();
+    }
 
-        ScoreSorter s(datafile);
-        s.readFile();
-        s.doSort();
-        return 0;
+    ScoreSorter s(datafile);
+    s.readFile();
+    s.doSort();
+    return 0;
 }
