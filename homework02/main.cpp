@@ -43,16 +43,16 @@ enum SortKind{
 
 typedef struct                      //定义结构体
 {
-    int num;
-    QString name;
-    QVector<int> scores;
+    QStringList stu;
 } studData;
 
-QDebug operator<< (QDebug d, const studData &data)          //对于<<的重载，使其可以直接输出studData结构
+QDebug operator<< (QDebug d, const studData &data)          //对于QDebug左移操作符重载，使其可以直接输出studData结构
 {
-    QDebugStateSaver saver(d);
-    d.nospace()<<data.num<<data.name<<data.scores;
-    return d;
+   for(int i=0;i<data.stu.size();i++)
+   {
+       d.noquote().nospace()<<QString(data.stu.at(i))<<"\t";
+   }
+   return d;
 }
 
 // 比较类，用于std::sort第三个参数
@@ -67,55 +67,76 @@ public:
 private:
     int currentColumn;
 };
-
+//重载比较规则
 bool myCmp::operator()(const studData &d1, const studData &d2)
 {
-    bool result = false;
-    quint32 sortedColumn = 0x00000001<<currentColumn;
-    switch (sortedColumn)
-    {
-    case SK::col01:
-        d1.num<d2.num;
-        break;
-    case SK::col02:
-        d1.name<d2.name;
-        break;
-    default:
-        d1.scores<d2.scores;
-    // 请补全运算符重载函数
-    }
-    return result;
+    return d1.stu.at(currentColumn+1)>d2.stu.at(currentColumn+1);
 }
-
 
 class ScoreSorter
 {
 public:
     ScoreSorter(QString dataFile);
-    // ...
-    // 请补全该类，使其实现上述要求
-    // ...
-}
+    void readFile();
+    void doSort();
+private:
+    QString FilePath;
+    QList<studData> data;
+    studData listtitle;
+    void outFile(quint8 lie);
+};
 
-// 请补全
-ScoreSorter::ScoreSorter(QString dataFile)
+ScoreSorter::ScoreSorter(QString dataFile)          //构造函数
 {
+    this->FilePath=dataFile;
 }
-
-
-void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+void ScoreSorter::readFile()
 {
-    // 自定义qDebug
+    QFile file(this->FilePath);   //只读方式打开文件
+        if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            qDebug()<<"Can't open the file!";
+        }
+        //读取表头并按空格 split '  '.  //
+        QString titile(file.readLine());
+        this->listtitle.stu = titile.split(" ", QString::SkipEmptyParts);
+        // 除去末尾的'\n'
+        if((this->listtitle.stu).last() == "\n") this->listtitle.stu.removeLast();
+        // 按行读取
+        studData perdata;
+        while(!file.atEnd())
+        {
+            QByteArray line = file.readLine();
+            QString str(line);
+            perdata.stu = str.split(" ", QString::SkipEmptyParts);
+            //去末尾'\n'  如果是空 qlist()  则摒弃,否则添加到 data
+            if((perdata.stu).last() == "\n") perdata.stu.removeLast();
+            if(perdata.stu.size()==0) continue;
+            this->data.append(perdata);
+        }
+        file.close();
 }
+void ScoreSorter::doSort()
+{
+    for(int i=1;i<this->listtitle.stu.size();i++)
+       {
+           //声明比较规则
+           myCmp thiscmp(i-1);    //初始化规则对象
+           std::sort(this->data.begin() , this->data.end() , thiscmp );  //排序
+           qDebug()<<"排序后输出，当前排序第 "<<i+1 <<" 列：";
+           qDebug() << '\t'<< (this->listtitle);    //qDebug重载输出
+           for(int i=0;i<this->data.size();i++)
+               qDebug() << this->data.at(i);
+           qDebug()<<"***************************************************************************\n";
+
+       }
+}
+
 int main(int argc, char *argv[])
 {
-//    QCoreApplication a(argc, argv);
-//    return a.exec();
     Q_UNUSED(argc);
     Q_UNUSED(argv);
-    qInstallMessageHandler(myMessageOutput);
-    QString datafile = "data.txt";
-
+    QString datafile = "D:/Dev/homework/data.txt";
     // 如果排序后文件已存在，则删除之
     QFile f("sorted_"+datafile);
     if (f.exists())
