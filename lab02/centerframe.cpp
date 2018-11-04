@@ -145,12 +145,12 @@ void CenterFrame::createUserCommandArea()
     imgBtn->setCheckable(true);
     imgBtn->setIconSize(p.size());
     QImage image(":/user");
-    QRect targetRect(5,5,20,20);
+    QRect targetRect(0,0,p.size().width(),p.size().height());
     QRect sourceRect=image.rect();
     painter.drawImage(targetRect,image,sourceRect);
 
     imgBtn->setIcon (QIcon(p));
-    connect(imgBtn,&QPushButton::clicked,this, &CenterFrame::photoset);
+    connect(imgBtn,&QPushButton::clicked,this, &CenterFrame::on_btnchoseimageClicked);
 
     // 选项Group布局
     QGridLayout *gridLayout = new QGridLayout();
@@ -236,6 +236,7 @@ void CenterFrame::updateButtonStatus()
     btnDiamond->setChecked(false);
     btnText->setChecked(false);
     edtText->setVisible(false);
+    imgBtn->setChecked(false);
 
     // 然后根据设置的绘图类型重新切换按键状态
     switch (drawWidget->shapeType()) {
@@ -259,16 +260,19 @@ void CenterFrame::updateButtonStatus()
         edtText->setVisible(true);      // 使编辑框可见
         edtText->setFocus();            // 编辑框获得输入焦点
         break;
+    case ST::picture:
+        imgBtn->setChecked(true);
+        break;
     default:
         break;
     }
 }
 
 
-void CenterFrame::photoset()
-{
-   drawWidget->photo();
-}
+//void CenterFrame::photoset()
+//{
+//   drawWidget->photo();
+//}
 
 void CenterFrame::setPenStyle(int penStyle)
 {
@@ -357,3 +361,16 @@ void CenterFrame::on_btnDiamondClicked()
     else
         drawWidget->setShapeType(ST::None);
 }
+void CenterFrame::on_btnchoseimageClicked()
+ {
+      if(imgBtn->isChecked())
+          {
+              drawWidget->setShapeType(ST::picture);
+              drawWidget->choseimage();
+              updateButtonStatus();
+          }
+          else
+          {
+              drawWidget->setShapeType(ST::None);
+          }
+ }

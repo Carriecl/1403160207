@@ -2,6 +2,8 @@
 #include <QMouseEvent>
 #include <QPen>
 #include <QMessageBox>
+#include <QDialog>
+#include <QFileDialog>
 
 
 DrawWidget::DrawWidget(QWidget *parent) : QWidget(parent)
@@ -114,17 +116,29 @@ void DrawWidget::clear ()
     update ();
 }
 
-//设置图标格式
-void DrawWidget::photo()
+//选择图片
+void DrawWidget::choseimage()
 {
-    pix->load(":/user");
-    QPixmap *newPix = new QPixmap(size());
-    newPix->fill (BACKGROUND_COLOR);
-    QPainter p(newPix);
-    p.drawPixmap (QPoint((width()-pix->width())/2,(height()-pix->width())/2), *pix);
-    delete pix;     //一定要删除原来的对象，否则会出现内存泄漏
-    pix = newPix;
-    update();
+    QString filename =QFileDialog::getOpenFileName( this,tr("选择图片文件"), "/user","Images (*.png *.xpm *.jpg)");   //文件只显示.png .xpm .jpg格式
+       if(filename.isEmpty())
+               return;
+       else
+       {
+           QImage img;
+           if(!(img.load(filename))) //加载图像
+           {
+               QMessageBox::information(this, tr("打开图像失败"),tr("打开图像失败!"));
+               return;
+           }
+       }
+       pix->load(filename);
+       QPixmap *newP = new QPixmap(size());
+       newP->fill (BACKGROUND_COLOR);
+       QPainter p(newP);
+       p.drawPixmap (QPoint((width()-pix->width())/2,(height()-pix->width())/2), *pix);
+       delete pix;
+       pix = newP;
+       update();
 }
 
 void DrawWidget::setShapeType(ST::ShapeType type)

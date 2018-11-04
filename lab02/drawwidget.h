@@ -18,7 +18,7 @@ public:
     void setShapeType(ST::ShapeType type);
     ST::ShapeType shapeType();
     void setDrawnText(QString text);
-    void photoset();
+    //void photoset();
 
 
 protected:
@@ -37,7 +37,7 @@ public slots:
     void setWidth(int);
     void setColor(QColor);
     void clear();
-    void photo();
+    void choseimage();
 
 private :
     QPixmap *pix;

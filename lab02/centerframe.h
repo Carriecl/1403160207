@@ -34,7 +34,7 @@ public slots:
     void setPenWidth(int width=1);
     void setPenColor(QColor color);
     void clearPaint();
-    void photoset();//图片
+   // void photoset();//图片
 
 
 protected slots:
@@ -45,6 +45,7 @@ protected slots:
     void on_btnTextClicked();
     void on_edtTextEdited(const QString &text);
     void on_btnDiamondClicked();
+    void on_btnchoseimageClicked();
 
 
 private:
