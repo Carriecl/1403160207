@@ -33,6 +33,7 @@ private:
     QSpinBox *widthSpinBox;         //画笔线宽spinbox
     QToolButton *colorBtn;          //颜色选择工具栏按键
     QToolButton *clearBtn;          //“清除”工具栏按键
+    QToolButton *imgBtn;            //画图片工具栏按键
 };
 #endif // MAINWINDOW_H
 

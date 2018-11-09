@@ -15,6 +15,9 @@ DrawWidget::DrawWidget(QWidget *parent) : QWidget(parent)
     pix = new QPixmap(size());      //此QPixmap对象用来准备随时接受绘制的内容
     pix->fill (BACKGROUND_COLOR);          //填充背景色为白色
     setMinimumSize (600, 400);      //设置绘制区窗体的最小尺寸
+    pic=new QPixmap(size());
+    pic->fill(Qt::transparent);
+    pic->load(filename);
 
 }
 
@@ -22,6 +25,7 @@ DrawWidget::~DrawWidget()
 {
     // 注意：一定要删除pix指针
     delete pix;
+    delete pic;
 }
 
 void DrawWidget::setStyle (int s)
@@ -48,7 +52,6 @@ void DrawWidget::mousePressEvent (QMouseEvent *e)
         canDraw = true;
     }
 }
-
 void DrawWidget::mouseMoveEvent (QMouseEvent *e)
 {
 
@@ -71,8 +74,6 @@ void DrawWidget::mouseMoveEvent (QMouseEvent *e)
         }
     }
 }
-
-
 void DrawWidget::mouseReleaseEvent(QMouseEvent *e)
 {
     if (e->button() == Qt::LeftButton){
@@ -90,7 +91,11 @@ void DrawWidget::mouseReleaseEvent(QMouseEvent *e)
 void DrawWidget::paintEvent (QPaintEvent *)
 {
     QPainter painter(this);
-    painter.drawPixmap (QPoint(0, 0), *pix);
+    QRect imgrect=QRect(this->width()/4,this->height()/4,this->width()/2,this->height()/2);
+    QImage pic1=pix->toImage();
+    QImage pic2=pic->toImage();
+    painter.drawImage(0,0,pic1);
+    painter.drawImage(imgrect, pic2);
 }
 
 
@@ -119,26 +124,8 @@ void DrawWidget::clear ()
 //选择图片
 void DrawWidget::choseimage()
 {
-    QString filename =QFileDialog::getOpenFileName( this,tr("选择图片文件"), "/user","Images (*.png *.xpm *.jpg)");   //文件只显示.png .xpm .jpg格式
-       if(filename.isEmpty())
-               return;
-       else
-       {
-           QImage img;
-           if(!(img.load(filename))) //加载图像
-           {
-               QMessageBox::information(this, tr("打开图像失败"),tr("打开图像失败!"));
-               return;
-           }
-       }
-       pix->load(filename);
-       QPixmap *newP = new QPixmap(size());
-       newP->fill (BACKGROUND_COLOR);
-       QPainter p(newP);
-       p.drawPixmap (QPoint((width()-pix->width())/2,(height()-pix->width())/2), *pix);
-       delete pix;
-       pix = newP;
-       update();
+    filename=QFileDialog::getOpenFileName( this,tr("选择图片文件"), "/user","Images (*.png *.xpm *.jpg)");   //文件只显示.png .xpm .jpg格式
+    pic->load(filename);
 }
 
 void DrawWidget::setShapeType(ST::ShapeType type)
@@ -234,6 +221,7 @@ void DrawWidget::drawShape(const QPointF ptStart,const QPointF ptEnd,const ST::S
     // 抗锯齿必须在painter激活后，也就是绘制对象确定后设置
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen (pen);
+    /**************************绘图工作*************************************/
     switch (drawType) {
     case ST::Rectangle:
         painter.drawRect(QRectF(ptStart,ptEnd));

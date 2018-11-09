@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
      setWindowTitle(tr("实验二 - 窗口、控件及基本绘图实验 "));
      penStyleChangged(styleComboBox->currentData().toInt());      //初始化线型，设置控件中当前值作为初始值
      centerFrame->setPenWidth (widthSpinBox->value ());  //设置初始线宽
-      centerFrame->setPenColor (Qt::red); //设置初始颜色
+     centerFrame->setPenColor (FOREGROUND_COLOR); //设置初始颜色
 }
 
 MainWindow::~MainWindow()
@@ -50,6 +50,8 @@ void MainWindow::createToolBar ()
     styleComboBox->setCurrentIndex(1);
 
 
+    /******************************设置控件属性**********************************/
+
     // 线宽选择框
     widthLabel = new QLabel(tr("线宽"));
     widthSpinBox = new QSpinBox;
@@ -75,7 +77,21 @@ void MainWindow::createToolBar ()
     connect (clearBtn, &QToolButton::clicked, centerFrame, &CenterFrame::clearPaint);
 
 
-    // 向工具栏上添加各个控件
+    //图片选择框
+    pixmap.fill(BACKGROUND_COLOR);
+    QPainter painter(&pixmap);
+    QImage img(":/user");
+    QRect targetRect(0,0,20,20);
+    QRect sourceRect=img.rect();
+    painter.drawImage(targetRect,img,sourceRect);
+    imgBtn=new QToolButton;
+    imgBtn->setToolTip(tr("选择图片"));
+    imgBtn->setIcon(QIcon(pixmap));
+    connect(imgBtn,&QToolButton::clicked,centerFrame,&CenterFrame::showimage);
+
+
+
+    /*********************** 向工具栏上添加各个控件********************************/
     toolBar->addWidget (styleLabel);
     toolBar->addWidget (styleComboBox);
     toolBar->addWidget (widthLabel);
@@ -83,6 +99,7 @@ void MainWindow::createToolBar ()
     toolBar->addWidget (colorBtn);
     toolBar->addSeparator();
     toolBar->addWidget (clearBtn);
+    toolBar->addWidget(imgBtn);
  }
 
 void MainWindow::penStyleChangged (int index)

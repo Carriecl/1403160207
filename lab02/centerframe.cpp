@@ -6,7 +6,7 @@
 #include <QPushButton>
 #include <QPainter>
 #include <QPixmap>
-#include <QGridLayout>
+#include <QGridLayout>         //网格布局
 #include <QLineEdit>
 #include <QDebug>
 #include <QDialog>
@@ -107,7 +107,6 @@ void CenterFrame::createUserCommandArea()
     btnDiamond->setIconSize(p.size());
     p.fill(BACKGROUND_COLOR);
     //菱形的四个顶点
-    //p.fill(FOREGROUND_COLOR);
     QPointF pt4(p.size().width()/2,3);
     QPointF pt5(2,p.size().height()/2);
     QPointF pt6(p.size().width()/2,p.size().height()-3);
@@ -138,20 +137,6 @@ void CenterFrame::createUserCommandArea()
     connect(btnText,&QPushButton::clicked,
             this,&CenterFrame::on_btnTextClicked);
 
-    //图片按钮
-    p.fill (BACKGROUND_COLOR);
-    imgBtn=new QPushButton(group);
-    imgBtn->setToolTip("绘制图片");
-    imgBtn->setCheckable(true);
-    imgBtn->setIconSize(p.size());
-    QImage image(":/user");
-    QRect targetRect(0,0,p.size().width(),p.size().height());
-    QRect sourceRect=image.rect();
-    painter.drawImage(targetRect,image,sourceRect);
-
-    imgBtn->setIcon (QIcon(p));
-    connect(imgBtn,&QPushButton::clicked,this, &CenterFrame::on_btnchoseimageClicked);
-
     // 选项Group布局
     QGridLayout *gridLayout = new QGridLayout();
     gridLayout->addWidget(btnRect,0,0);
@@ -160,7 +145,6 @@ void CenterFrame::createUserCommandArea()
     gridLayout->addWidget(btnLine,1,1);
     gridLayout->addWidget(btnText,2,0);
     gridLayout->addWidget(btnDiamond,2,1);
-    gridLayout->addWidget(imgBtn,3,0);
     gridLayout->setMargin(3);
     gridLayout->setSpacing(3);
     group->setLayout(gridLayout);
@@ -236,7 +220,6 @@ void CenterFrame::updateButtonStatus()
     btnDiamond->setChecked(false);
     btnText->setChecked(false);
     edtText->setVisible(false);
-    imgBtn->setChecked(false);
 
     // 然后根据设置的绘图类型重新切换按键状态
     switch (drawWidget->shapeType()) {
@@ -260,19 +243,12 @@ void CenterFrame::updateButtonStatus()
         edtText->setVisible(true);      // 使编辑框可见
         edtText->setFocus();            // 编辑框获得输入焦点
         break;
-    case ST::picture:
-        imgBtn->setChecked(true);
-        break;
     default:
         break;
     }
 }
 
 
-//void CenterFrame::photoset()
-//{
-//   drawWidget->photo();
-//}
 
 void CenterFrame::setPenStyle(int penStyle)
 {
@@ -305,8 +281,6 @@ void CenterFrame::on_btnRectClicked()
     }
 
 }
-
-
 void CenterFrame::on_btnEllipseClicked()
 {
     if(btnEllipse->isChecked()){
@@ -326,8 +300,6 @@ void CenterFrame::on_btnLineClicked()
         drawWidget->setShapeType(ST::None);
     }
 }
-
-
 void CenterFrame::on_btnTriangleClicked()
 {
     if(btnTriangle->isChecked()){
@@ -337,7 +309,6 @@ void CenterFrame::on_btnTriangleClicked()
         drawWidget->setShapeType(ST::None);
     }
 }
-
 void CenterFrame::on_btnTextClicked()
 {
 
@@ -361,16 +332,7 @@ void CenterFrame::on_btnDiamondClicked()
     else
         drawWidget->setShapeType(ST::None);
 }
-void CenterFrame::on_btnchoseimageClicked()
+void CenterFrame::showimage()
  {
-      if(imgBtn->isChecked())
-          {
-              drawWidget->setShapeType(ST::picture);
-              drawWidget->choseimage();
-              updateButtonStatus();
-          }
-          else
-          {
-              drawWidget->setShapeType(ST::None);
-          }
+        drawWidget->choseimage();
  }
