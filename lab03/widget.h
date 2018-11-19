@@ -8,13 +8,6 @@
 namespace Ui {
 class Widget;
 }
-
-//QT_CHARTS_BEGIN_NAMESPACE
-//class QLineSeries;
-//class QValueAxis;
-//class QCharts;
-//QT_CHARTS_END_NAMESPACE
-
 QT_CHARTS_USE_NAMESPACE
 
 class dataWorker;
@@ -37,23 +30,25 @@ protected:
 
 
 
-private slots:
+private slots:          //槽函数
     void handleMarkerClicked();
     void on_btnStart_clicked();
-    void updateDataChart(QList<QDateTime> date, QList<qreal> tempHigh, QList<qreal> tempLow);
+    void updateDataChart(QList<QDateTime> date, QList<qreal> lineOne, QList<qreal> linetwo);
     void on_cbShowPoint_clicked();
     void on_btnLegendAlign_clicked();
     void on_cbLegendBold_clicked();
     void on_cbLegendItalic_clicked();
-//    void on_ButtonTemperature_clicked();
-//    void on_ButtonAQI_clicked();
+    void on_ButtonTemperature_clicked();    //查询温度单选框被按下
+    void on_ButtonAQI_clicked();            //查询AQI单选框被按下
+    void on_dataError(QString error);
 
 private:
     Ui::Widget *ui;
     dataWorker* worker;
-    int switch_Num;
+    QStringList citypinyin,city;       //城市拼音和城市名
+    QStringList urlString;
 
 
 };
 
-#endif // MAINWIDGET_H
+#endif // WIDGET_H

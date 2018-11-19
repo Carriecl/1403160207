@@ -22,16 +22,12 @@ public:
     explicit dataWorker(QString date, QObject *parent = 0);
     void setRequestDate(QString newDate);
     void setRequestCity(QString newCity);
-    void setSwitchNum(int num);
-    int switch_Num;
-    void chooseCity(QString newCity);
 
-    void setTemperature();
-    void setAQI();
 
     QString requestDate();
     QString requestCity();
     void doRequest();
+    void setweashow(bool tempAQI);       //设置查询温度或空气质量
 
 
 protected:
@@ -48,18 +44,16 @@ protected slots:
 private:
     QNetworkAccessManager *manager;         //!< 网络访问管理类对象
     QString _requestDate;                   //!< 请求年月
-    QString _requestCity;
-    QString _requestCitypinyin;
+    QString _requestCity;                   //!< 请求城市
 
     QList<QDateTime> dataDate;              //!< 日期
     QList<qreal> dataHigh;                  //!< 最高温度
     QList<qreal> dataLow;                   //!< 最低温度
 
-    QList<qreal> dataPM25;
-    QList<qreal> dataAQI;
-
     const QString splitter;                 //!< 数据分隔符
     const QString dataPath;                 //!< 数据保存路径
+
+    bool weashow;                           //true表示显示温度，false表示显示空气质量
 
 signals:
     /**
@@ -71,7 +65,24 @@ signals:
      * 该信号在数据解析完成，将解析的数据以3个列表（QList）的形式作为信号参数发射，<br/>
      * 提醒界面开始更新图表数据。
      */
-    void dataParseFinished(QList<QDateTime> date,QList<qreal> high, QList<qreal> low);
+    void dataParseFinished(QList<QDateTime> data,QList<qreal> high, QList<qreal> low);
+
+    /**
+     * @brief httpRequestError
+     *
+     * @param error ： 错误信息
+     *
+     * http请求错误信号，当出现http请求错误时，发送该信号
+     */
+    void httpRequestError(QString error);
+
+    /**
+     * @brief dataParseError
+     * @param error ： 错误信息
+     *
+     * 数据解析错误信号，当出现使用QXmlStreamReader解析数据错误时，发送该信号
+     */
+    void dataParseError(QString error);
 
 public slots:
 };

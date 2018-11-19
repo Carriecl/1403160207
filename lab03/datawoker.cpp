@@ -1,7 +1,7 @@
 #include "dataworker.h"
 #include <QtNetwork>
 #include <QXmlStreamReader>
-#include <QRegExp>
+#include <QDebug>
 
 /**
  * @brief dataWorker::dataWorker 构造函数
@@ -15,6 +15,7 @@ dataWorker::dataWorker(QObject *parent) :
     QObject(parent),splitter("#-#-#"),dataPath("data")
 {
     initNetwork();
+    weashow=true;            //默认显示温度
 }
 
 /**
@@ -46,19 +47,14 @@ void dataWorker::setRequestDate(QString newDate)
 
 void dataWorker::setRequestCity(QString newCity)
 {
-    _requestCitypinyin=newCity;
+    _requestCity=newCity;
 }
 
-void dataWorker::setSwitchNum(int num )
-{
-     switch_Num = num;
-}
 
 /**
  * @brief getter函数，获得当前的年月
  * @return 请求年月
  */
-
 QString dataWorker::requestDate()
 {
     return _requestDate;
@@ -70,7 +66,7 @@ QString dataWorker::requestDate()
  */
 QString dataWorker::requestCity()
 {
-    return _requestCitypinyin;
+    return _requestCity;
 }
 
 /**
@@ -83,8 +79,12 @@ QString dataWorker::requestCity()
 void dataWorker::doRequest()
 {
     // 导入数据，首先检查是否已经存在数据文件
-    QString fName = QString("%1/%2%3.txt").arg(dataPath,_requestDate,_requestCitypinyin);
-//    qDebug()<<fName;
+    QString fName;
+    if(weashow)
+        fName=QString("%1/weather_%2-%3.txt").arg(dataPath).arg(_requestCity).arg(_requestDate);
+    else
+        fName=QString("%1/aqi_%2-%3.txt").arg(dataPath).arg(_requestCity).arg(_requestDate);
+
     QStringList dataList;
     QFile f(fName);
     if(f.open(QIODevice::ReadOnly|QIODevice::Text)){  // 成功打开数据文件，则由文件中读取
@@ -101,6 +101,11 @@ void dataWorker::doRequest()
     }
 }
 
+void dataWorker::setweashow(bool tempAQI)
+{
+    this->weashow=tempAQI;      //设置查找温度或空气质量
+}
+
 /**
  * @brief 构造实际请求链接
  * @return 数据页面地址
@@ -108,26 +113,17 @@ void dataWorker::doRequest()
  * 该函数将请求年月插入模板中，获得实际数据页面的链接地址。
  */
 
-
 QString dataWorker::requestUrl()
 {
     QString r;
-   switch(switch_Num){
-   case 0:
-       r= QString("http://lishi.tianqi.com/%1/%2.html").arg(_requestCitypinyin).arg(_requestDate);
-       qDebug()<<r;
-       return r;
-       break;
-   case 1:
-       r= QString("http://www.tianqihoubao.com/aqi/%1-%2.html").arg(_requestCitypinyin).arg(_requestDate);
-       qDebug()<<r;
-       return r;
-       break;
-   }
-   return r;
+    if(weashow)         //查询温度
+        r=QString("https://lishi.tianqi.com/%1/%2.html").arg(_requestCity).arg(_requestDate);
+    else                //查询AQI
+        r=QString("http://www.tianqihoubao.com/aqi/%1-%2.html").arg(_requestCity).arg(_requestDate);
+
+    qDebug()<<r;
+    return r;
 }
-
-
 
 /**
  * @brief 初始化网络请求管理类QNetworkAccessManager类
@@ -153,39 +149,42 @@ void dataWorker::initNetwork()
  * <br/>
  *
  */
-void dataWorker::parseHTML(const QString sourceText)
+void dataWorker::parseHTML(const QString sourceText)        //解析含HTML标签的数据文本
 {
     // 使用QXmlStreamReader解析Html文档
     QXmlStreamReader reader(sourceText.simplified().trimmed());
-//qDebug()<<"ok1";
+
     QStringList strData;
     while (!reader.atEnd()) {
         reader.readNext();
-        if (reader.isStartElement()) {
-            switch(switch_Num)
+        if (reader.isStartElement())
+        {
+            if(weashow)
             {
-            case 0:
-                if (reader.name() == "ul"){         // 查找Html标签：ul
-                strData<<reader.readElementText(QXmlStreamReader::IncludeChildElements).trimmed();
+                if(reader.name()=="ul")
+                {    // 查找Html标签：ul
+                    strData<<reader.readElementText(QXmlStreamReader::IncludeChildElements).trimmed();
+                }
             }
-                break;
-            case 1:
-                if (reader.name() == "tr"){         // 查找Html标签：tr
-                strData<<reader.readElementText(QXmlStreamReader::IncludeChildElements).trimmed();
-            }
-                break;
-            default:break;
-            }
+            else
+                {
+                    if(reader.name()=="tr")
+                        {   // 查找Html标签：tr
+                            strData<<reader.readElementText(QXmlStreamReader::IncludeChildElements).trimmed();
+                        }
+                }
         }
     }
     if (reader.hasError()) {
         qDebug()<< "  读取错误： " << reader.errorString();
+
     }else{
         if(!strData.isEmpty()){
             parseData(strData.join(splitter));
             exportDataToFile(strData.join(splitter));
         }
     }
+
 }
 
 /**
@@ -196,40 +195,34 @@ void dataWorker::parseHTML(const QString sourceText)
  * 本程序只需使用前三列数据，在解析时每行文本只需使用前三个数据即可。<br/>
  * 数据解析完成后，发送dataParseFinished信号通知界面进行数据更新。<br/>
  */
-
-void dataWorker::parseData(const QString sourceText)
+void dataWorker::parseData(const QString sourceText)        //解析纯数据文本
 {
     QStringList dataList = sourceText.split(splitter);
+
     dataDate.clear();
-    dataAQI.clear();
-    dataPM25.clear();
     dataHigh.clear();
     dataLow.clear();
-     dataList.removeFirst();                  // 第一条数据是表头，删除
+
+    dataList.removeFirst();                  // 第一条数据是表头，删除
     for (QString s : dataList){
         QStringList dataList = s.split(" ",QString::SkipEmptyParts);
-         qDebug()<<"website"<<dataList;
         QDateTime momentInTime = QDateTime::fromString(dataList.at(0),"yyyy-MM-dd");
         dataDate.append(momentInTime);
-
-        if(switch_Num==0)
+        if(weashow)                //读取温度2列最高气温和3列的最低气温
         {
             dataHigh.append(dataList.at(1).toDouble());
             dataLow.append(dataList.at(2).toDouble());
-
-        }else{
-            dataAQI.append(dataList.at(2).toDouble());
-            dataPM25.append(dataList.at(4).toDouble());
         }
+        else
+            if(!weashow)        //读取AQI的3列和5列PM2.5
+            {
+                dataHigh.append(dataList.at(2).toDouble());
+                dataLow.append(dataList.at(4).toDouble());
+            }
     }
-        if(switch_Num==0)
-        {
-            emit dataParseFinished(dataDate,dataHigh,dataLow);
-        }else{
-            qDebug()<<"ok2";
-            emit dataParseFinished(dataDate,dataAQI,dataPM25);
-        }
+    emit dataParseFinished(dataDate,dataHigh,dataLow);      //发送信号，转到绘图槽
 }
+
 /**
  * @brief 将数据输出为文件
  * @param dataText 需要输出的数据文本
@@ -242,9 +235,11 @@ void dataWorker::exportDataToFile(const QString dataText)
     QDir dir;
     if( ! dir.exists(dataPath) )
         qDebug()<<dir.mkdir(dataPath);
-
-    QString fName = QString("%1/%2%3.txt").arg(dataPath,_requestCitypinyin,_requestDate);
-
+    QString fName;
+    if(weashow)         //温度文件
+        fName=QString("%1/weather_%2-%3.txt").arg(dataPath).arg(_requestCity).arg(_requestDate);
+    else
+        fName=QString("%1/aqi_%2-%3.txt").arg(dataPath).arg(_requestCity).arg(_requestDate);
     QFile f(fName);
     if(f.open(QIODevice::WriteOnly|QIODevice::Text)){
         QTextStream stream (&f);
@@ -274,20 +269,24 @@ void dataWorker::httpGet(QString url)
  */
 void dataWorker::httpsFinished(QNetworkReply *reply)
 {
-    if (reply->error()) {
-        qDebug()<<reply->errorString();
-        reply->deleteLater();
-        reply = Q_NULLPTR;
-        return;
-    }
     int v = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if(v != 200){
-        qDebug()<<"HTTP 返回代码："<<v;
+    QString error="";
+    if (reply->error()) {
+        // 通知GUI，http访问出错
+        error = QString("访问出错：代码 %1,原因 %2").arg(v).arg(reply->errorString());
+        emit httpRequestError(error);
         reply->deleteLater();
         reply = Q_NULLPTR;
         return;
     }
-
+    if(v != 200)
+    {
+        error = QString("访问出错：代码 %1,原因 %2").arg(v).arg(reply->errorString());
+        emit httpRequestError(error);
+        reply->deleteLater();
+        reply = Q_NULLPTR;
+        return;
+    }
 
     qDebug()<<"开始读取返回的数据：";
     QString html = QString::fromLocal8Bit(reply->readAll());
@@ -299,32 +298,34 @@ void dataWorker::httpsFinished(QNetworkReply *reply)
 
     qDebug()<<"返回数据长度："<<html.size();
 
+    // qDebug最大显示27605个
+    // qDebug()<<html.left(27605);
+
     // 先做一个简单处理，将包含内容的完整<div>..</div>标签内的文本内容，
     // 并滤除其中的空白字符"\r\n\t"
 
     //天气
-    if(switch_Num==0){
+    if(weashow)
+    {
         int begin = html.indexOf("<div class=\"tqtongji2\">");
         int end = html.indexOf("<div class=\"lishicity03\">");
         html = html.mid(begin,end-begin);
         html = html.left(html.indexOf("<div style=\"clear:both\">"));
-        html = html.simplified().trimmed();
-
-        qDebug()<<"website"<<html;
-        parseHTML(html);
     }
-    //PM2.5
-    if(switch_Num==1){
+    //AQI
+    if(!weashow){
         int begin = html.indexOf("<table width=\"620px\" border=\"0\" class=\"b\" cellpadding=\"1\" cellspacing=\"1\">");
         int end = html.indexOf("<div id=\"chartdiv\" align=\"center\">");
         html = html.mid(begin,end-begin);
         html = html.left(html.indexOf("</div>"));
-        html = html.simplified().trimmed();
-
-        qDebug()<<"website"<<html;
-        parseHTML(html);
     }
-
-    // 开始解析HTML
+    html = html.simplified().trimmed();
+    if (! html.isEmpty()){
+        qDebug()<<"开始解析html";
+        parseHTML(html);  // 开始解析HTML
+    }else{
+        qDebug()<<"HTML内容为空："<<html;
+        emit dataParseError(QString("HTML内容为空"));       //发送信号
+    }
 }
 
